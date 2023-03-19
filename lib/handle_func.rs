@@ -1,18 +1,19 @@
 use bytecodec::{DecodeExt, Error};
 use httpcodec::{HttpVersion, ReasonPhrase, Request, RequestDecoder, Response, StatusCode};
-use serde_json::{Value};
+use serde_json::Value;
 
 pub type HandleFuncType<T> = fn(req: T) -> bytecodec::Result<Response<String>>;
-pub type HandleFuncTwoParameterType<T, K> = fn(req: T, data: K) -> bytecodec::Result<Response<String>>;
+pub type HandleFuncTwoParameterType<T, K> =
+    fn(req: T, data: K) -> bytecodec::Result<Response<String>>;
 
 #[derive(Debug)]
 pub enum HandleFunc {
     StringBody(HandleFuncType<Request<String>>),
     BufferBody(HandleFuncType<Vec<u8>>),
-    JsonBuffer(HandleFuncTwoParameterType<Request<String>, Value>)
+    JsonBuffer(HandleFuncTwoParameterType<Request<String>, Value>),
 }
 impl Default for HandleFunc {
-    fn default() ->  Self {
+    fn default() -> Self {
         todo!()
     }
 }
@@ -40,19 +41,17 @@ impl HandleFunc {
     fn handle(&self, data: Vec<u8>) -> bytecodec::Result<Response<String>> {
         match self {
             HandleFunc::StringBody(handle_func) => {
-                let req =  HandleFunc::decode_string(data)?;
+                let req = HandleFunc::decode_string(data)?;
                 handle_func(req)
             }
-            HandleFunc::BufferBody(handle_func) => {
-                handle_func(data)
-            }
+            HandleFunc::BufferBody(handle_func) => handle_func(data),
             HandleFunc::JsonBuffer(handle_func) => {
                 let req = HandleFunc::decode_string(data)?;
-                let json = match serde_json::from_str(req.body()){
+                let json = match serde_json::from_str(req.body()) {
                     Ok(json) => Ok(json),
-                    Err(e) => Err(std::io::Error::from(e))
+                    Err(e) => Err(std::io::Error::from(e)),
                 }?;
-                handle_func(req,json)
+                handle_func(req, json)
             }
         }
     }

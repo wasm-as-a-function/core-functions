@@ -14,15 +14,3 @@ fn main() {
     };
     waaf.start();
 }
-
-fn handler(req: Request<String>) -> bytecodec::Result<Response<String>>{
-    Ok(Response::new(
-        HttpVersion::V1_0,
-        StatusCode::new(200)?,
-        ReasonPhrase::new("")?,
-        format!("echo: {}", req.body()),
-    ))
-}
-
-#[cfg(test)]
-mod test;

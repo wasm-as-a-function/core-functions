@@ -1,9 +1,10 @@
+use crate::handle_func::HandleFunc;
+use crate::WaafFunction;
 use httpcodec::{HttpVersion, ReasonPhrase, Request, Response, StatusCode};
 use std::io::{Read, Write};
 #[cfg(not(feature = "std"))]
 use wasmedge_wasi_socket::{Shutdown, TcpListener, TcpStream};
-use crate::handle_func::HandleFunc;
-use crate::WaafFunction;
+use std::env;
 
 // used as example
 fn handle_http(req: Request<String>) -> bytecodec::Result<Response<String>> {
@@ -33,13 +34,15 @@ fn handle_client(mut stream: TcpStream, handle_func: &HandleFunc) -> std::io::Re
     Ok(())
 }
 
-
 pub fn start_socket(waaf: WaafFunction) -> std::io::Result<()> {
-    let port = waaf.port;
+    let port = std::env::var("PORT").unwrap_or("1234".to_string());
     println!("new connection at 0.0.0.0:{}", port);
-    let listener = TcpListener::bind(format!("127.0.0.1:{}", port), false)?;
-        println!("exiting function");
+    let listener = TcpListener::bind(format!("0.0.0.0:{}", port), false)?;
     loop {
         let res = handle_client(listener.accept(false)?.0, &waaf.handle_func);
     }
+
+    println!("exiting");
+
+    Ok(())
 }
